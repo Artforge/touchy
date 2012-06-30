@@ -1,7 +1,7 @@
 /* Touchy : a jQuery plugin for managing touch events in Webkit
- * 
- * version: 1.0
- * 
+ *
+ * version: 1.1
+ *
  * requires jQuery 1.4.2+
  */
 
@@ -10,9 +10,9 @@
     // public jQuery properties
     $.touchyOptions = {
         useDelegation: false,
-        /* 
+        /*
          * To be implemented
-         * 
+         *
         press: { // the user touches the element before further interaction.  maybe abstracts touchstart and mousedown?
             requiredTouches: 1,
             data: {},
@@ -23,12 +23,12 @@
             triggerMouseEnter: false,
             data: {},
             proxyEvents: [TouchStart, TouchMove, TouchEnd]
-        },        
+        },
         tap: { // the user taps briefly on the element as the only interaction.  can interrelate with doubletap.
             requiredTouches: 1,
             msThreshTap: 200,
             data: {},
-            proxyEvents: [TouchStart, TouchEnd]        
+            proxyEvents: [TouchStart, TouchEnd]
         },
         dbltap: { // the user taps twice within a short period of time on the element as the only interaction.
             requiredTouches: 1,
@@ -46,7 +46,7 @@
                 startDate: null
             },
             proxyEvents: ["TouchStart", "TouchEnd"]
-        },        
+        },
         drag: { // the user touches the element and then moves his or her finger across the screen
             requiredTouches: 1,
             msHoldThresh: 100,
@@ -76,7 +76,7 @@
         },
         swipe: { // the user touches the screen, then rapidly drags his or her finger(s), then stops touching the screen, all in a "flicking" or "swiping" motion.  may require up to four fingers.
             requiredTouches: 1,
-            velocityThresh: 1, 
+            velocityThresh: 1,
             triggerOn: "touchmove",
             data: {
                 startPoint: null,
@@ -101,7 +101,7 @@
                 var event = e.originalEvent,
                     touches = event.targetTouches,
                     data;
-                event.preventDefault();             
+                event.preventDefault();
 
                 switch (this.context) {
 
@@ -112,9 +112,9 @@
                             updateDragData(data, touches, e.timeStamp);
                             var startPoint = data.startPoint;
                             $target.trigger('touchy-drag', ['start', $target, {
-                                "movePoint":     startPoint, 
-                                "lastMovePoint": startPoint, 
-                                "startPoint":    startPoint, 
+                                "movePoint":     startPoint,
+                                "lastMovePoint": startPoint,
+                                "startPoint":    startPoint,
                                 "velocity":      0
                             }]);
                         }
@@ -132,21 +132,21 @@
                     case 'pinch':
                         data = $target.data('touchyPinch');
                         var points = getTwoTouchPointData(e);
-                        if(points){ 
+                        if(points){
                             data.startPoint = {
                                 "x": points.centerX,
                                 "y": points.centerY
-                            }                                                
+                            };
                             data.startDistance = Math.sqrt( Math.pow( (points.x2 - points.x1), 2 ) + Math.pow( (points.y2 - points.y1), 2 ) );
-                        }                           
+                        }
                         break;
                         
                     //////////////// LONGPRESS ////////////////
                     case 'longpress':
-                        data = $target.data('touchyLongpress');  
+                        data = $target.data('touchyLongpress');
                         if (touches.length === data.settings.requiredTouches) {
                             data.startPoint = {
-                                "x": touches[0].pageX, 
+                                "x": touches[0].pageX,
                                 "y": touches[0].pageY
                             };
                             data.startDate = e.timeStamp;
@@ -159,17 +159,17 @@
                         }
                         break;
                         
-                    //////////////// ROTATE ////////////////    
+                    //////////////// ROTATE ////////////////
                     case 'rotate':
-                        data = $target.data('touchyRotate');  
+                        data = $target.data('touchyRotate');
                         if (touches.length === data.settings.requiredTouches) {
                             if (touches.length === 1) {
                                 ensureSingularStartData(data, touches, e.timeStamp);
-                            } 
+                            }
                             else {
                                 var points = getTwoTouchPointData(e);
                                 data.startPoint = {
-                                    "x": points.centerX, 
+                                    "x": points.centerX,
                                     "y": points.centerY
                                 };
                                 data.startDate = e.timeStamp;
@@ -183,7 +183,7 @@
                                 "degrees": 0
                             }]);
                         }
-                        break;                        
+                        break;
                         
                 }
             }
@@ -208,14 +208,14 @@
                             updateDragData(data, touches, e.timeStamp);
                             var movePoint = data.movePoint,
                                 lastMovePoint = data.lastMovePoint,
-                                distance = movePoint.x === lastMovePoint.x && movePoint.y === lastMovePoint.y ? 0 : Math.sqrt( Math.pow( (movePoint.x - lastMovePoint.x), 2 ) + Math.pow( (movePoint.y - lastMovePoint.y), 2 ) ),
+                                distance = getDistance(movePoint, lastMovePoint),
                                 ms = data.moveDate - data.lastMoveDate,
                                 velocity = ms === 0 ? 0 : distance / ms;
                             if (data.held) {
                                 $target.trigger('touchy-drag', ['move', $target, {
-                                    "movePoint":     movePoint, 
-                                    "lastMovePoint": lastMovePoint, 
-                                    "startPoint":    data.startPoint, 
+                                    "movePoint":     movePoint,
+                                    "lastMovePoint": lastMovePoint,
+                                    "startPoint":    data.startPoint,
                                     "velocity":      velocity
                                 }]);
                             }
@@ -228,20 +228,20 @@
                         if (touches.length === data.settings.requiredTouches) {
                             updateSwipeData(data, touches, e.timeStamp);
 
-                            if (!data.swipeExecuted && data.swiped && data.settings.triggerOn === 'touchmove') { 
+                            if (!data.swipeExecuted && data.swiped && data.settings.triggerOn === 'touchmove') {
                                 data.swipeExecuted = true;
                                 triggerSwipe(data, $target);
-                            }                        
+                            }
                         }
-                        break; 
+                        break;
 
                     //////////////// PINCH ////////////////
                     case 'pinch':
                         data = $target.data('touchyPinch');
                         var points = getTwoTouchPointData(e);
-                        if(points){ 
+                        if(points){
                             data.currentPoint = {
-                                "x": points.centerX, 
+                                "x": points.centerX,
                                 "y": points.centerY
                             };
                             if (!hasGestureChange()) {
@@ -253,20 +253,20 @@
 
                                 if(currentDistance > data.settings.pxThresh){
                                     $target.trigger('touchy-pinch', [$target, {
-                                        "scale":         scale, 
-                                        "previousScale": previousScale, 
-                                        "currentPoint":  data.currentPoint, 
-                                        "startPoint":    data.startPoint, 
+                                        "scale":         scale,
+                                        "previousScale": previousScale,
+                                        "currentPoint":  data.currentPoint,
+                                        "startPoint":    data.startPoint,
                                         "startDistance": startDistance
                                     }]);
-                                }    
-                            } 
+                                }
+                            }
                         }
                         break;
                         
-                    //////////////// ROTATE ////////////////    
+                    //////////////// ROTATE ////////////////
                     case 'rotate':
-                        data = $target.data('touchyRotate');  
+                        data = $target.data('touchyRotate');
                         if (touches.length === data.settings.requiredTouches) {
                             var lastMovePoint,
                                 lastMoveDate,
@@ -296,8 +296,8 @@
                                 centerCoords = data.centerCoords = data.centerCoords || {
                                     "x": targetPageCoords.x + ($target.width() * 0.5),
                                     "y": targetPageCoords.y + ($target.height() * 0.5)
-                                }; 
-                            } 
+                                };
+                            }
                             else {
                                 var points = getTwoTouchPointData(e);
                                     centerCoords = data.centerCoords = {
@@ -314,7 +314,7 @@
                             degrees = data.degrees = radians * (180 / Math.PI);
                             degreeDelta = lastDegrees ? degrees - lastDegrees : 0;
                             ms = moveDate - lastMoveDate;
-                            velocity = data.velocity = ms === 0 ? 0 : Math.abs(degreeDelta) / ms; 
+                            velocity = data.velocity = ms === 0 ? 0 : Math.abs(degreeDelta) / ms;
                             
                             $target.trigger('touchy-rotate', ['move', $target, {
                                 "startPoint": data.startPoint,
@@ -325,9 +325,9 @@
                                 "degrees": degrees,
                                 "degreeDelta": degreeDelta,
                                 "velocity": velocity
-                            }]);                            
+                            }]);
                         }
-                        break;               
+                        break;
 
                 }
             }
@@ -338,7 +338,7 @@
                 $target = getTarget(e, eventType);
 
             if ($target) {
-                var $target = $(e.target),
+                var $target = $(e.target), // TODO: fix or comment this weirdness
                     event = e.originalEvent,
                     touches = event.touches,
                     data;
@@ -358,16 +358,16 @@
 
                         if(currentDistance > data.settings.pxThresh){
                             $target.trigger('touchy-pinch', [$target, {
-                                "scale": scale, 
-                                "previousScale": previousScale, 
-                                "currentPoint": currentPoint, 
-                                "startPoint": startPoint, 
+                                "scale": scale,
+                                "previousScale": previousScale,
+                                "currentPoint": currentPoint,
+                                "startPoint": startPoint,
                                 "startDistance": startDistance
                             }]);
-                        }                    
+                        }
                         break;
 
-                    //////////////// ROTATE ////////////////    
+                    //////////////// ROTATE ////////////////
                     case 'rotate':
                         data = $target.data('touchyRotate');
                         var lastDegrees = data.lastDegrees = data.degrees,
@@ -384,11 +384,11 @@
                             "degrees": degrees,
                             "degreeDelta": degreeDelta,
                             "velocity": velocity
-                        }]);                             
+                        }]);
                         break;
-                }                        
-            }       
-        },    
+                }
+            }
+        },
 
         handleTouchEnd: function (e) {
             var eventType = this.context,
@@ -408,13 +408,13 @@
                             // note: not updating data for end phase
                             var movePoint = data.movePoint || data.startPoint,
                                 lastMovePoint = data.lastMovePoint || data.startPoint,
-                                distance = movePoint.x === lastMovePoint.x && movePoint.y === lastMovePoint.y ? 0 : Math.sqrt( Math.pow( (movePoint.x - lastMovePoint.x), 2 ) + Math.pow( (movePoint.y - lastMovePoint.y), 2 ) ),
+                                distance = getDistance(movePoint, lastMovePoint),
                                 ms = data.moveDate - data.lastMoveDate,
                                 velocity = ms === 0 ? 0 : distance / ms;
                             $target.trigger('touchy-drag', ['end', $target, {
-                                "movePoint":     movePoint, 
-                                "lastMovePoint": lastMovePoint, 
-                                "startPoint":    data.startPoint, 
+                                "movePoint":     movePoint,
+                                "lastMovePoint": lastMovePoint,
+                                "startPoint":    data.startPoint,
                                 "velocity":      velocity
                             }]);
                         }
@@ -426,16 +426,16 @@
                             "lastMovePoint": null,
                             "lastMoveDate": null,
                             "held": false
-                        }); 
+                        });
                         break;
 
                     //////////////// SWIPE ////////////////
                     case 'swipe':
                         data = $target.data('touchySwipe');
-                        // note: not updating data for end phase                    
-                        if (data.swiped && data.settings.triggerOn === 'touchend') { 
+                        // note: not updating data for end phase
+                        if (data.swiped && data.settings.triggerOn === 'touchend') {
                             triggerSwipe(data, $target);
-                        }                        
+                        }
                         $.extend(data, {
                             "startPoint": null,
                             "startDate": null,
@@ -458,19 +458,19 @@
                             "pinched": false,
                             "scale": 1,
                             "previousScale": null
-                        });                    
+                        });
                         break;
                         
                     //////////////// LONGPRESS ////////////////
                     case 'longpress':
-                        data = $target.data('touchyLongpress');  
-                        clearTimeout(data.timer); 
+                        data = $target.data('touchyLongpress');
+                        clearTimeout(data.timer);
                         $.extend(data, {
                             "startDate":null
                         });
-                        break; 
+                        break;
                         
-                    //////////////// ROTATE ////////////////    
+                    //////////////// ROTATE ////////////////
                     case 'rotate':
                         data = $target.data('touchyRotate');
                         var degreeDelta = data.lastDegrees ? data.degrees - data.lastDegrees : 0;
@@ -482,7 +482,7 @@
                             "degrees": data.degrees,
                             "degreeDelta": degreeDelta,
                             "velocity": data.velocity
-                        }]);                        
+                        }]);
                         $.extend(data, {
                             "startPoint":null,
                             "startDate":null,
@@ -496,12 +496,12 @@
                             "lastDegrees":null,
                             "velocity":null
                         });
-                        break;    
-                }            
+                        break;
+                }
             }
         }
 
-        /* 
+        /*
          * To be implemented
          *
         handleTouchCancel: function (e) {
@@ -525,8 +525,8 @@
                     case 'swipe':
                         console.log('swipe touchcancel');
                         break;
-                }            
-            }        
+                }
+            }
         }
         */
     
@@ -546,7 +546,7 @@
                 lastMovePoint: data.movePoint && data.movePoint.x ? data.movePoint : data.startPoint,
                 moveDate: moveDate,
                 movePoint: {
-                    "x": touches[0].pageX, 
+                    "x": touches[0].pageX,
                     "y": touches[0].pageY
                 }
             });
@@ -580,9 +580,9 @@
             lastMovePoint: data.movePoint && data.movePoint.x ? data.movePoint : data.startPoint,
             moveDate: moveDate,
             movePoint: movePoint,
-            hDistance: hDistance, 
+            hDistance: hDistance,
             vDistance: vDistance
-        }); 
+        });
         
         if (!data.swiped && ( Math.abs(hDistance) / ms > data.settings.velocityThresh || Math.abs(vDistance) / ms > data.settings.velocityThresh )) {
             data.swiped = true;
@@ -592,7 +592,7 @@
     triggerSwipe = function (data, $target) {
         var movePoint = data.movePoint,
             lastMovePoint = data.lastMovePoint,
-            distance = movePoint.x === lastMovePoint.x && movePoint.y === lastMovePoint.y ? 0 : Math.sqrt( Math.pow( (movePoint.x - lastMovePoint.x), 2 ) + Math.pow( (movePoint.y - lastMovePoint.y), 2 ) ),
+            distance = getDistance(movePoint, lastMovePoint),
             ms = data.moveDate - data.lastMoveDate,
             velocity = ms === 0 ? 0 : distance / ms,
             hDistance = data.hDistance,
@@ -606,13 +606,13 @@
                 direction = vDistance > 0 ? 'down' : 'up';
             }
             $target.trigger('touchy-swipe', [$target, {
-                "direction":     direction, 
-                "movePoint":     movePoint, 
-                "lastMovePoint": lastMovePoint, 
-                "startPoint":    data.startPoint,                                        
+                "direction":     direction,
+                "movePoint":     movePoint,
+                "lastMovePoint": lastMovePoint,
+                "startPoint":    data.startPoint,
                 "velocity":      velocity
             }]);
-        }        
+        }
     },
     
 
@@ -621,9 +621,9 @@
     ensureSingularStartData = function (data, touches, timeStamp) {
         if (!data.startPoint) {
             data.startPoint = {
-                "x": touches[0].pageX, 
+                "x": touches[0].pageX,
                 "y": touches[0].pageY
-            }
+            };
         }
         if (!data.startDate) {
             data.startDate = timeStamp;
@@ -635,40 +635,45 @@
     },
     
     getTwoTouchPointData = function(e){ // could become multitouch point data for any number of touches?
-        var points = false, 
+        var points = false,
             touches = e.originalEvent.touches;
-        if(touches.length === 2){ 
+        if(touches.length === 2){
             points = {
                 x1: touches[0].pageX,
                 y1: touches[0].pageY,
                 x2: touches[1].pageX,
                 y2: touches[1].pageY
-            }
+            };
             points.centerX = (points.x1 + points.x2) / 2;
             points.centerY = (points.y1 + points.y2) / 2;
             return points;
-        } 
+        }
         return points;
-    }, 
+    },
     
     getTarget = function(e, eventType){
         var $delegate,
             $target = false,
-            i = 0, 
-            len = boundElems[eventType].length
+            i = 0,
+            len = boundElems[eventType].length;
         if ($.touchyOptions.useDelegation) {
             for (; i < len; i += 1) {
                 $delegate = $(boundElems[eventType][i]).has(e.target);
-                if ($delegate.length > 0){                        
+                if ($delegate.length > 0){
                     $target = $delegate;
                     break;
                 }
             }
         }
         else if (boundElems[eventType] && boundElems[eventType].is(e.target)) {
-            $target = $(e.target)
+            $target = $(e.target);
         }
         return $target;
+    },
+
+    getDistance = function(pointA, pointB) {
+        return pointA.x === pointB.x && pointA.y === pointB.y ? 0 : // TODO: benchmark with and without this logic
+                Math.sqrt( Math.pow((pointA.x - pointB.x), 2) + Math.pow((pointA.y - pointB.y), 2) );
     },
     
     // get pageX and pageY of an element
@@ -676,7 +681,8 @@
     getViewOffset = function (node, singleFrame) {
 
         function addOffset(node, coords, view) {
-            var p = node.offsetParent;
+            var style,
+                p = node.offsetParent;
             coords.x += node.offsetLeft - (p ? p.scrollLeft : 0);
             coords.y += node.offsetTop - (p ? p.scrollTop : 0);
 
@@ -684,22 +690,22 @@
                 if (p.nodeType == 1) {
                     var parentStyle = view.getComputedStyle(p, '');
                     if (parentStyle.position != 'static') {
-                        coords.x += parseInt(parentStyle.borderLeftWidth);
-                        coords.y += parseInt(parentStyle.borderTopWidth);
+                        coords.x += parseInt(parentStyle.borderLeftWidth, 10);
+                        coords.y += parseInt(parentStyle.borderTopWidth, 10);
 
                         if (p.localName == 'TABLE') {
-                            coords.x += parseInt(parentStyle.paddingLeft);
-                            coords.y += parseInt(parentStyle.paddingTop);
+                            coords.x += parseInt(parentStyle.paddingLeft, 10);
+                            coords.y += parseInt(parentStyle.paddingTop, 10);
                         }
                         else if (p.localName == 'BODY') {
-                            var style = view.getComputedStyle(node, '');
-                            coords.x += parseInt(style.marginLeft);
-                            coords.y += parseInt(style.marginTop);
+                            style = view.getComputedStyle(node, '');
+                            coords.x += parseInt(style.marginLeft, 10);
+                            coords.y += parseInt(style.marginTop, 10);
                         }
                     }
                     else if (p.localName == 'BODY') {
-                        coords.x += parseInt(parentStyle.borderLeftWidth);
-                        coords.y += parseInt(parentStyle.borderTopWidth);
+                        coords.x += parseInt(parentStyle.borderLeftWidth, 10);
+                        coords.y += parseInt(parentStyle.borderTopWidth, 10);
                     }
 
                     var parent = node.parentNode;
@@ -713,13 +719,13 @@
             }
             else {
                 if (node.localName == 'BODY') {
-                    var style = view.getComputedStyle(node, '');
-                    coords.x += parseInt(style.borderLeftWidth);
-                    coords.y += parseInt(style.borderTopWidth);
+                    style = view.getComputedStyle(node, '');
+                    coords.x += parseInt(style.borderLeftWidth, 10);
+                    coords.y += parseInt(style.borderTopWidth, 10);
 
                     var htmlStyle = view.getComputedStyle(node.parentNode, '');
-                    coords.x -= parseInt(htmlStyle.paddingLeft);
-                    coords.y -= parseInt(htmlStyle.paddingTop);
+                    coords.x -= parseInt(htmlStyle.paddingLeft, 10);
+                    coords.y -= parseInt(htmlStyle.paddingTop, 10);
                 }
 
                 if (node.scrollLeft)
@@ -734,14 +740,14 @@
         }
 
         var coords = {
-            x: 0, 
+            x: 0,
             y: 0
         };
         if (node)
             addOffset(node, coords, node.ownerDocument.defaultView);
 
         return coords;
-    },       
+    },
     
     /*
     function init (elem, state) {
@@ -753,7 +759,7 @@
             // from teardown
         }
     };
-    */    
+    */
    
     boundElems = {},
     contexts = {};
@@ -766,7 +772,7 @@
             var capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
 
             boundElems[key] = $([]);
-            contexts[key] = new (function () {this.context = key;})();
+            contexts[key] = new (function () {this.context = key;})(); // TODO: fix or comment this weirdness
 
             $.event.special["touchy-" + key] = {
                 setup: function (data, namespaces, eventHandle) {
@@ -788,7 +794,7 @@
                         $.each($.touchyOptions[key].proxyEvents, function(i, proxyEvent){
                             $(document).unbind(proxyEvent.toLowerCase() + '.touchy.' + key);
                         });
-                    }            
+                    }
                 },
                 add: function (handleObj) {
                     $.extend($(this).data('touchy' + capitalizedKey).settings, handleObj.data);
@@ -798,47 +804,47 @@
                     };
                 }
             };
-        }        
+        }
     });
 
     
     /* example code that the above metaprogramming loop would look like, if it
      * exploded for the "drag" key.
-     * 
-     * additional comments are from Ben Alman's awesome blog post 
+     *
+     * additional comments are from Ben Alman's awesome blog post
      * on jQuery special events:
-     * http://benalman.com/news/2010/03/jquery-special-events/ 
-     * 
-     *//* 
-    $.event.special["touchy-drag"] = {
+     * http://benalman.com/news/2010/03/jquery-special-events/
+     *
+     *//*
+    $.event.special["touchy-drag"] = { 
         
         /* setup()
-         * 
-         * Do something when the first event handler is bound to a particular 
+         *
+         * Do something when the first event handler is bound to a particular
          * element.
          *
-         *   More explicitly: do something when an event handler is bound to a 
-         *   particular element, but only if there are not currently any event 
-         *   handlers bound. This may occur in two scenarios: 1) either the very 
-         *   first time that event is bound to that element, or 2) the next time 
-         *   that event is bound to that element, after all previous handlers 
+         *   More explicitly: do something when an event handler is bound to a
+         *   particular element, but only if there are not currently any event
+         *   handlers bound. This may occur in two scenarios: 1) either the very
+         *   first time that event is bound to that element, or 2) the next time
+         *   that event is bound to that element, after all previous handlers
          *   for that event have been unbound from that element.
-         * 
-         * data - (Anything) Whatever eventData (optional) was passed in when 
+         *
+         * data - (Anything) Whatever eventData (optional) was passed in when
          *        binding the event.
-         * namespaces - (Array) An array of namespaces specified when binding 
+         * namespaces - (Array) An array of namespaces specified when binding
          *              the event.
-         * eventHandle - (Function) The actual function that will be bound to 
-         *               the browser’s native event (this is used internally for 
+         * eventHandle - (Function) The actual function that will be bound to
+         *               the browser’s native event (this is used internally for
          *               the beforeunload event, you’ll never use it).
-         *               
-         * Returning false tells jQuery to bind the specified event handler 
+         *
+         * Returning false tells jQuery to bind the specified event handler
          * using native DOM methods.
-         * 
-         * This method, when executed, will always execute immediately before 
+         *
+         * This method, when executed, will always execute immediately before
          * the corresponding add method executes.
-         * 
-         *//* 
+         *
+         *//*
         setup: function (data, namespaces, eventHandle) {
             // Event code.
             
