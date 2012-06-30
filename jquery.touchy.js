@@ -60,6 +60,7 @@
             proxyEvents: ["TouchStart", "TouchMove", "TouchEnd"]
         },
         pinch: { // the user puts two fingers on the element and then either increases or decreases the distance between them.
+            requiredTouches: 2,
             pxThresh: 0,
             data: {
                 startPoint: null,
@@ -100,15 +101,15 @@
             if ($target) {
                 var event = e.originalEvent,
                     touches = event.targetTouches,
-                    data;
+                    touchyDataName = "touchy" + eventType.charAt(0).toUpperCase() + eventType.slice(1), // example: "touchyDrag"
+                    data = $target.data(touchyDataName);
                 event.preventDefault();
+                
+                if (touches.length === data.settings.requiredTouches) {
+                    switch (eventType) {
 
-                switch (this.context) {
-
-                    //////////////// DRAG ////////////////
-                    case 'drag':
-                        data = $target.data('touchyDrag');
-                        if (touches.length === data.settings.requiredTouches) {
+                        //////////////// DRAG ////////////////
+                        case 'drag':
                             updateDragData(data, touches, e.timeStamp);
                             var startPoint = data.startPoint;
                             $target.trigger('touchy-drag', ['start', $target, {
@@ -117,34 +118,27 @@
                                 "startPoint":    startPoint,
                                 "velocity":      0
                             }]);
-                        }
-                        break;
+                            break;
 
-                    //////////////// SWIPE ////////////////
-                    case 'swipe':
-                        data = $target.data('touchySwipe');
-                        if (touches.length === data.settings.requiredTouches) {
+                        //////////////// SWIPE ////////////////
+                        case 'swipe':
                             updateSwipeData(data, touches, e.timeStamp);
-                        }
-                        break;
+                            break;
 
-                    //////////////// PINCH ////////////////
-                    case 'pinch':
-                        data = $target.data('touchyPinch');
-                        var points = getTwoTouchPointData(e);
-                        if(points){
-                            data.startPoint = {
-                                "x": points.centerX,
-                                "y": points.centerY
-                            };
-                            data.startDistance = Math.sqrt( Math.pow( (points.x2 - points.x1), 2 ) + Math.pow( (points.y2 - points.y1), 2 ) );
-                        }
-                        break;
-                        
-                    //////////////// LONGPRESS ////////////////
-                    case 'longpress':
-                        data = $target.data('touchyLongpress');
-                        if (touches.length === data.settings.requiredTouches) {
+                        //////////////// PINCH ////////////////
+                        case 'pinch':
+                            var points = getTwoTouchPointData(e);
+                            if(points){
+                                data.startPoint = {
+                                    "x": points.centerX,
+                                    "y": points.centerY
+                                };
+                                data.startDistance = Math.sqrt( Math.pow( (points.x2 - points.x1), 2 ) + Math.pow( (points.y2 - points.y1), 2 ) );
+                            }
+                            break;
+                            
+                        //////////////// LONGPRESS ////////////////
+                        case 'longpress':
                             data.startPoint = {
                                 "x": touches[0].pageX,
                                 "y": touches[0].pageY
@@ -156,13 +150,10 @@
                             data.timer = setTimeout($.proxy(function(){
                                 $target.trigger('touchy-longpress', ['end', $target]);
                             }, this), data.settings.msThresh);
-                        }
-                        break;
-                        
-                    //////////////// ROTATE ////////////////
-                    case 'rotate':
-                        data = $target.data('touchyRotate');
-                        if (touches.length === data.settings.requiredTouches) {
+                            break;
+                            
+                        //////////////// ROTATE ////////////////
+                        case 'rotate':
                             if (touches.length === 1) {
                                 ensureSingularStartData(data, touches, e.timeStamp);
                             }
@@ -182,10 +173,10 @@
                                 "velocity": 0,
                                 "degrees": 0
                             }]);
-                        }
-                        break;
-                        
-                }
+                            break;
+                            
+                    }
+                } 
             }
         },
 
@@ -196,139 +187,132 @@
             if ($target) {
                 var event = e.originalEvent,
                     touches = event.targetTouches,
-                    data;
+                    touchyDataName = "touchy" + eventType.charAt(0).toUpperCase() + eventType.slice(1), // example: "touchyDrag"
+                    data = $target.data(touchyDataName);
                 event.preventDefault();
 
-                switch (eventType) {
+                if (touches.length === data.settings.requiredTouches) {
+                  switch (eventType) {
 
-                    //////////////// DRAG ////////////////
-                    case 'drag':
-                        data = $target.data('touchyDrag');
-                        if (touches.length === data.settings.requiredTouches) {
-                            updateDragData(data, touches, e.timeStamp);
-                            var movePoint = data.movePoint,
-                                lastMovePoint = data.lastMovePoint,
-                                distance = getDistance(movePoint, lastMovePoint),
-                                ms = data.moveDate - data.lastMoveDate,
-                                velocity = ms === 0 ? 0 : distance / ms;
-                            if (data.held) {
-                                $target.trigger('touchy-drag', ['move', $target, {
-                                    "movePoint":     movePoint,
-                                    "lastMovePoint": lastMovePoint,
-                                    "startPoint":    data.startPoint,
-                                    "velocity":      velocity
-                                }]);
-                            }
-                        }
-                        break;
+                      //////////////// DRAG ////////////////
+                      case 'drag':
+                          updateDragData(data, touches, e.timeStamp);
+                          var movePoint = data.movePoint,
+                              lastMovePoint = data.lastMovePoint,
+                              distance = getDistance(movePoint, lastMovePoint),
+                              ms = data.moveDate - data.lastMoveDate,
+                              velocity = ms === 0 ? 0 : distance / ms;
+                          if (data.held) {
+                              $target.trigger('touchy-drag', ['move', $target, {
+                                  "movePoint":     movePoint,
+                                  "lastMovePoint": lastMovePoint,
+                                  "startPoint":    data.startPoint,
+                                  "velocity":      velocity
+                              }]);
+                          }
+                          break;
 
-                    //////////////// SWIPE ////////////////
-                    case 'swipe':
-                        data = $target.data('touchySwipe');
-                        if (touches.length === data.settings.requiredTouches) {
-                            updateSwipeData(data, touches, e.timeStamp);
+                      //////////////// SWIPE ////////////////
+                      case 'swipe':                          
+                          updateSwipeData(data, touches, e.timeStamp);
 
-                            if (!data.swipeExecuted && data.swiped && data.settings.triggerOn === 'touchmove') {
-                                data.swipeExecuted = true;
-                                triggerSwipe(data, $target);
-                            }
-                        }
-                        break;
+                          if (!data.swipeExecuted && data.swiped && data.settings.triggerOn === 'touchmove') {
+                              data.swipeExecuted = true;
+                              triggerSwipe(data, $target);
+                          }
+                          break;
 
-                    //////////////// PINCH ////////////////
-                    case 'pinch':
-                        data = $target.data('touchyPinch');
-                        var points = getTwoTouchPointData(e);
-                        if(points){
-                            data.currentPoint = {
-                                "x": points.centerX,
-                                "y": points.centerY
-                            };
-                            if (!hasGestureChange()) {
-                                var moveDistance = Math.sqrt( Math.pow( (points.x2 - points.x1), 2 ) + Math.pow( (points.y2 - points.y1), 2 ) ),
-                                    previousScale = data.previousScale = data.scale || 1,
-                                    startDistance = data.startDistance,
-                                    scale = data.scale = moveDistance / startDistance,
-                                    currentDistance = scale * startDistance;
+                      //////////////// PINCH ////////////////
+                      case 'pinch':
+                          var points = getTwoTouchPointData(e);
+                          if(points){
+                              data.currentPoint = {
+                                  "x": points.centerX,
+                                  "y": points.centerY
+                              };
+                              if (!hasGestureChange()) {
+                                  var moveDistance = Math.sqrt( Math.pow( (points.x2 - points.x1), 2 ) + Math.pow( (points.y2 - points.y1), 2 ) ),
+                                      previousScale = data.previousScale = data.scale || 1,
+                                      startDistance = data.startDistance,
+                                      scale = data.scale = moveDistance / startDistance,
+                                      currentDistance = scale * startDistance;
 
-                                if(currentDistance > data.settings.pxThresh){
-                                    $target.trigger('touchy-pinch', [$target, {
-                                        "scale":         scale,
-                                        "previousScale": previousScale,
-                                        "currentPoint":  data.currentPoint,
-                                        "startPoint":    data.startPoint,
-                                        "startDistance": startDistance
-                                    }]);
-                                }
-                            }
-                        }
-                        break;
-                        
-                    //////////////// ROTATE ////////////////
-                    case 'rotate':
-                        data = $target.data('touchyRotate');
-                        if (touches.length === data.settings.requiredTouches) {
-                            var lastMovePoint,
-                                lastMoveDate,
-                                movePoint,
-                                moveDate,
-                                lastMoveDate,
-                                distance,
-                                ms,
-                                velocity,
-                                targetPageCoords,
-                                centerCoords,
-                                radians,
-                                degrees,
-                                lastDegrees,
-                                degreeDelta;
-                            
-                            lastMovePoint = data.lastMovePoint = data.movePoint || data.startPoint;
-                            lastMoveDate = data.lastMoveDate = data.moveDate || data.startDate;
-                            movePoint = data.movePoint = {
-                                "x": touches[0].pageX,
-                                "y": touches[0].pageY
-                            };
-                            moveDate = data.moveDate = e.timeStamp;
+                                  if(currentDistance > data.settings.pxThresh){
+                                      $target.trigger('touchy-pinch', [$target, {
+                                          "scale":         scale,
+                                          "previousScale": previousScale,
+                                          "currentPoint":  data.currentPoint,
+                                          "startPoint":    data.startPoint,
+                                          "startDistance": startDistance
+                                      }]);
+                                  }
+                              }
+                          }
+                          break;
 
-                            if (touches.length === 1) {
-                                targetPageCoords = data.targetPageCoords = data.targetPageCoords || getViewOffset(e.target);
-                                centerCoords = data.centerCoords = data.centerCoords || {
-                                    "x": targetPageCoords.x + ($target.width() * 0.5),
-                                    "y": targetPageCoords.y + ($target.height() * 0.5)
-                                };
-                            }
-                            else {
-                                var points = getTwoTouchPointData(e);
-                                    centerCoords = data.centerCoords = {
-                                        "x": points.centerX,
-                                        "y": points.centerY
-                                    };
-                                if (hasGestureChange()) {
-                                    break;
-                                }
-                                                               
-                            }
-                            radians = Math.atan2(movePoint.y - centerCoords.y, movePoint.x - centerCoords.x);
-                            lastDegrees = data.lastDegrees = data.degrees;
-                            degrees = data.degrees = radians * (180 / Math.PI);
-                            degreeDelta = lastDegrees ? degrees - lastDegrees : 0;
-                            ms = moveDate - lastMoveDate;
-                            velocity = data.velocity = ms === 0 ? 0 : Math.abs(degreeDelta) / ms;
-                            
-                            $target.trigger('touchy-rotate', ['move', $target, {
-                                "startPoint": data.startPoint,
-                                "startDate": data.startDate,
-                                "movePoint": movePoint,
-                                "lastMovePoint": lastMovePoint,
-                                "centerCoords": centerCoords,
-                                "degrees": degrees,
-                                "degreeDelta": degreeDelta,
-                                "velocity": velocity
-                            }]);
-                        }
-                        break;
+                      //////////////// ROTATE ////////////////
+                      case 'rotate':
+                          var lastMovePoint,
+                              lastMoveDate,
+                              movePoint,
+                              moveDate,
+                              lastMoveDate,
+                              distance,
+                              ms,
+                              velocity,
+                              targetPageCoords,
+                              centerCoords,
+                              radians,
+                              degrees,
+                              lastDegrees,
+                              degreeDelta;
 
+                          lastMovePoint = data.lastMovePoint = data.movePoint || data.startPoint;
+                          lastMoveDate = data.lastMoveDate = data.moveDate || data.startDate;
+                          movePoint = data.movePoint = {
+                              "x": touches[0].pageX,
+                              "y": touches[0].pageY
+                          };
+                          moveDate = data.moveDate = e.timeStamp;
+
+                          if (touches.length === 1) {
+                              targetPageCoords = data.targetPageCoords = data.targetPageCoords || getViewOffset(e.target);
+                              centerCoords = data.centerCoords = data.centerCoords || {
+                                  "x": targetPageCoords.x + ($target.width() * 0.5),
+                                  "y": targetPageCoords.y + ($target.height() * 0.5)
+                              };
+                          }
+                          else {
+                              var points = getTwoTouchPointData(e);
+                                  centerCoords = data.centerCoords = {
+                                      "x": points.centerX,
+                                      "y": points.centerY
+                                  };
+                              if (hasGestureChange()) {
+                                  break;
+                              }
+
+                          }
+                          radians = Math.atan2(movePoint.y - centerCoords.y, movePoint.x - centerCoords.x);
+                          lastDegrees = data.lastDegrees = data.degrees;
+                          degrees = data.degrees = radians * (180 / Math.PI);
+                          degreeDelta = lastDegrees ? degrees - lastDegrees : 0;
+                          ms = moveDate - lastMoveDate;
+                          velocity = data.velocity = ms === 0 ? 0 : Math.abs(degreeDelta) / ms;
+
+                          $target.trigger('touchy-rotate', ['move', $target, {
+                              "startPoint": data.startPoint,
+                              "startDate": data.startDate,
+                              "movePoint": movePoint,
+                              "lastMovePoint": lastMovePoint,
+                              "centerCoords": centerCoords,
+                              "degrees": degrees,
+                              "degreeDelta": degreeDelta,
+                              "velocity": velocity
+                          }]);
+                      break;
+
+                    }
                 }
             }
         },
