@@ -222,20 +222,21 @@
                           }
                           break;
 
-                      //////////////// PINCH ////////////////
-                      case 'pinch':
-                          var points = getTwoTouchPointData(e);
-                          if(points){
-                              data.currentPoint = {
-                                  "x": points.centerX,
-                                  "y": points.centerY
-                              };
-                              if (!hasGestureChange()) {
-                                  var moveDistance = Math.sqrt( Math.pow( (points.x2 - points.x1), 2 ) + Math.pow( (points.y2 - points.y1), 2 ) ),
-                                      previousScale = data.previousScale = data.scale || 1,
-                                      startDistance = data.startDistance,
-                                      scale = data.scale = moveDistance / startDistance,
-                                      currentDistance = scale * startDistance;
+                    //////////////// PINCH ////////////////
+                    case 'pinch':
+                        data = $target.data('touchyPinch');
+                        var points = getTwoTouchPointData(e);
+                        if(points){
+                            data.currentPoint = {
+                                "x": points.centerX,
+                                "y": points.centerY
+                            };
+                            if (!hasGestureChange()) {
+                                var moveDistance = Math.sqrt( Math.pow( (points.x2 - points.x1), 2 ) + Math.pow( (points.y2 - points.y1), 2 ) ),
+                                    previousScale = data.previousScale = data.scale || 1,
+                                    startDistance = data.startDistance,
+                                    scale = data.scale = moveDistance / startDistance,
+                                    currentDistance = scale * startDistance;
 
                                   if(currentDistance > data.settings.pxThresh){
                                       $target.trigger('touchy-pinch', [$target, {
@@ -298,7 +299,7 @@
                           degrees = data.degrees = radians * (180 / Math.PI);
                           degreeDelta = lastDegrees ? degrees - lastDegrees : 0;
                           ms = moveDate - lastMoveDate;
-                          velocity = data.velocity = ms === 0 ? 0 : Math.abs(degreeDelta) / ms;
+                          velocity = data.velocity = ms === 0 ? 0 : degreeDelta / ms;
 
                           $target.trigger('touchy-rotate', ['move', $target, {
                               "startPoint": data.startPoint,
@@ -358,7 +359,7 @@
                             degrees = data.degrees = event.rotation,
                             degreeDelta = lastDegrees ? degrees - lastDegrees : 0,
                             ms = data.moveDate - data.lastMoveDate,
-                            velocity = data.velocity = ms === 0 ? 0 : Math.abs(degreeDelta) / ms;
+                            velocity = data.velocity = ms === 0 ? 0 : degreeDelta / ms;
                         $target.trigger('touchy-rotate', ['move', $target, {
                             "startPoint": data.startPoint,
                             "startDate": data.startDate,
@@ -649,8 +650,8 @@
                 }
             }
         }
-        else if (boundElems[eventType] && boundElems[eventType].is(e.target)) {
-            $target = $(e.target);
+        else if (boundElems[eventType] && boundElems[eventType].index(e.target) != -1) {
+            $target = $(e.target)
         }
         return $target;
     },
